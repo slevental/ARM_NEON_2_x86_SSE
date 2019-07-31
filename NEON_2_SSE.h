@@ -6855,34 +6855,6 @@ _NEON2SSE_INLINE float32x2_t vrsqrte_f32(float32x2_t a) //use low 64 bits
 }
 
 
-_NEON2SSESTORAGE uint32x2_t vrsqrte_u32_old(uint32x2_t a); // VRSQRTE.U32 d0,d0
-_NEON2SSE_INLINE _NEON2SSE_PERFORMANCE_WARNING(uint32x2_t vrsqrte_u32_old(uint32x2_t a), _NEON2SSE_REASON_SLOW_SERIAL)
-{
-  //Input is  fixed point number!!!
-  //We implement the recip_sqrt_estimate function as described in ARMv7 reference manual (VRSQRTE instruction) but use float instead of double
-  uint32x2_t res;
-  __m128 tmp;
-  float r, resf, coeff;
-  int i,q0, s;
-  for (i =0; i<2; i++){
-    if((a.m64_u32[i] & 0xc0000000) == 0) { //a <=0x3fffffff
-      res.m64_u32[i] = 0xffffffff;
-    }else{
-      resf =  (float) (a.m64_u32[i] * (0.5f / (uint32_t)(1 << 31)));
-      coeff = (resf < 0.5f)? 512.0f : 256.0f ; /* range 0.25 <= resf < 0.5  or range 0.5 <= resf < 1.0*/
-      q0 = (int)(resf * coeff); /* a in units of 1/512 rounded down */
-      r = ((float)q0 + 0.5f) / coeff;
-      tmp = _mm_rsqrt_ss(_mm_load_ss( &r));/* reciprocal root r */
-      _mm_store_ss(&r, tmp);
-      s = (int)(256.0f * r + 0.5f); /* r in units of 1/256 rounded to nearest */
-      r = (float)(s / 256.0f);
-      res.m64_u32[i] = (uint32_t)(r * (((uint32_t)1) << 31));
-    }
-  }
-  return res;
-}
-
-
 _NEON2SSESTORAGE uint32x2_t vrsqrte_u32(uint32x2_t a); // VRSQRTE.U32 d0,d0
 _NEON2SSE_INLINE _NEON2SSE_PERFORMANCE_WARNING(uint32x2_t vrsqrte_u32(uint32x2_t a), _NEON2SSE_REASON_SLOW_SERIAL)
 {
